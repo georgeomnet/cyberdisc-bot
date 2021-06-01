@@ -10,7 +10,7 @@ import httpx
 from PIL import Image
 from discord import Colour, Embed, File, Member, Message, Reaction
 from discord.ext import tasks
-from discord.ext.commands import Bot, Cog, Context, command
+from discord.ext.commands import Bot, BucketType, Cog, Context, command, cooldown
 from html2markdown import convert
 
 from cdbot.constants import Maths as constants
@@ -144,6 +144,9 @@ class Maths(Cog):
         return await ctx.send(embed=embed)
 
     @command()
+    @cooldown(1, 60, BucketType.user)
+    @cooldown(4, 60, BucketType.channel)
+    @cooldown(6, 3600, BucketType.guild)
     async def latex(self, ctx: Context, *, expression: str):
         """
         Render a LaTeX expression with https://quicklatex.com/
