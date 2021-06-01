@@ -9,7 +9,7 @@ from random import choice, randint
 import re
 from random import randint
 from string import ascii_lowercase
-from typing import List
+from typing import List, Optional, Union
 from urllib.parse import urlencode
 
 import asyncpg
@@ -24,6 +24,7 @@ from discord import (
     NotFound,
     RawReactionActionEvent,
     embeds,
+    TextChannel
 )
 from discord.ext.commands import (
     Bot,
@@ -33,6 +34,7 @@ from discord.ext.commands import (
     UserConverter,
     command,
     cooldown,
+    MessageConverter
 )
 from discord.utils import get
 
@@ -161,9 +163,8 @@ class Fun(Cog):
     @Cog.listener()
     async def on_message(self, message: Message):
         # If a new quote is added, add it to the database.
-        if message.channel.id == QUOTES_CHANNEL_ID and (
-            message.author.id == QUOTES_BOT_ID or message.mentions is not None
-        ):
+        if message.channel.id == QUOTES_CHANNEL_ID and ((message.mentions and message.author.id != QUOTES_BOT_ID) or (
+                message.embeds and "Jump to message" in message.embeds[0].description)):
             await self.add_quote_to_db(message)
             print(f"Message #{message.id} added to database.")
 
@@ -375,6 +376,35 @@ class Fun(Cog):
         comic.add_field(name="Explanation:", value=f"https://explainxkcd.com/{number}")
 
         await ctx.send(embed=comic)
+
+    @command()
+    async def quote(self, ctx: Context, message: Union[MessageConverter, int], channel: Optional[TextChannel]):
+        """
+        Quotes the specified message.
+        """
+        in_quotes = ctx.channel.id == QUOTES_CHANNEL_ID
+        try:
+            if isinstance(message, int):
+                channel = ctx if channel is None else channel
+                message = await channel.fetch_message(int(message))
+            embed = Embed(
+                description=f"{message.content}\n\n[Jump to message]({message.jump_url})",
+                colour=Colour.blue(),
+                timestamp=message.created_at,
+            )
+            embed.set_image(url=message.attachments[0].url) if message.attachments else ...
+            embed.set_author(name=f"{message.author.name}#{message.author.discriminator}",
+                             icon_url=message.author.avatar_url)
+            embed.set_footer(text=f"{message.guild.name} | #{message.channel}")
+
+            await ctx.send(embed=message.embeds[0] if message.embeds else embed)
+        except (ValueError, NotFound, AttributeError):
+            # Error deletes after 10 seconds to keep #quotes clean.
+            await ctx.send(":no_entry_sign: Uh oh, quote not found :(",
+                           delete_after=10 if in_quotes else None)
+        finally:
+            if in_quotes:
+                await ctx.message.delete()
 
     @command()
     async def quotes(self, ctx: Context, member: FormerUser = None):
