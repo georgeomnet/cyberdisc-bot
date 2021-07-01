@@ -10,7 +10,7 @@ import httpx
 from PIL import Image
 from discord import Colour, Embed, File, Member, Message, Reaction
 from discord.ext import tasks
-from discord.ext.commands import Bot, Cog, Context, command
+from discord.ext.commands import Bot, BucketType, Cog, Context, command, cooldown
 from html2markdown import convert
 
 from cdbot.constants import Maths as constants
@@ -120,6 +120,9 @@ class Maths(Cog):
             await self.latex_render(message.channel, message.channel.id, message, message.content)
 
     @command()
+    @cooldown(1, 60, BucketType.user)
+    @cooldown(4, 60, BucketType.channel)
+    @cooldown(6, 3600, BucketType.guild)
     async def challenge(self, ctx: Context, number: int = 1):
         """Show the provided challenge number."""
         challenge = await get_challenge(number)
