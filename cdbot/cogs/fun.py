@@ -42,6 +42,11 @@ from cdbot.constants import (
     FAKE_ROLE_ID,
     LOCAL_DEBUGGING,
     LOGGING_CHANNEL_ID,
+    NEGATIVE_EMOJI,
+    NEUTRAL_EMOJI,
+    POLL_CHANNEL_ID,
+    POLL_WEBHOOK_ID,
+    POSITIVE_EMOJI,
     PostgreSQL,
     QUOTES_BOT_ID,
     QUOTES_CHANNEL_ID,
@@ -636,6 +641,27 @@ class Fun(Cog):
         Sends the image of the challenge solving flowchart.
         """
         await ctx.send("https://cdn.discordapp.com/attachments/411573884597436416/767122366521278474/trythis.png")
+
+    # Polls
+    @command()
+    async def suggest(self, ctx: Context, *, poll_question: str):
+        """
+        Takes a poll question and creates a poll in #polls.
+        """
+        confirm_msg = Embed(
+            description=f":white_check_mark: Your suggestion has been sent to <#{POLL_CHANNEL_ID}> to be voted on.",
+            color=0x6ABE6C)
+        confirm_msg.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
+        await ctx.send(embed=confirm_msg)
+
+        poll_webhook = await self.bot.fetch_webhook(POLL_WEBHOOK_ID)
+        poll_embed = Embed(description=poll_question, color=0x37A7F3)
+        poll_embed.set_footer(text=f"User ID: {ctx.message.author.id}")
+        poll = await poll_webhook.send(embed=poll_embed, username=ctx.message.author.name,
+                                       avatar_url=ctx.message.author.avatar_url, wait=True)
+        await poll.add_reaction(POSITIVE_EMOJI)
+        await poll.add_reaction(NEUTRAL_EMOJI)
+        await poll.add_reaction(NEGATIVE_EMOJI)
 
     @command()
     async def unacceptable(self, ctx: Context):

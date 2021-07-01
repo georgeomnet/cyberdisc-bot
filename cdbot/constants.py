@@ -102,6 +102,11 @@ QUOTES_CHANNEL_ID = int(environ.get("QUOTES_CHANNEL_ID", "463657120441696256"))
 QUOTES_BOT_ID = 292953664492929025
 LOGGING_CHANNEL_ID = int(environ.get("LOGGING_CHANNEL_ID", "538494690601992212"))
 WELCOME_BOT_ID = 155149108183695360
+POLL_CHANNEL_ID = int(environ.get("POLL_CHANNEL_ID", "574878887625097227"))
+POLL_WEBHOOK_ID = int(getenv("POLL_WEBHOOK_ID"))
+POSITIVE_EMOJI = str(environ.get("POSITIVE_EMOJI", "🟥"))
+NEUTRAL_EMOJI = str(environ.get("NEUTRAL_EMOJI", "🟩"))
+NEGATIVE_EMOJI = str(environ.get("NEGATIVE_EMOJI", "🟨"))
 CMA_LINKS = {"1": "https://cdn.discordapp.com/attachments/450107193820446722/492649412560945164/unknown.png",
              "2": "https://cdn.discordapp.com/attachments/450107193820446722/492649644623659014/unknown.png",
              "3": "https://cdn.discordapp.com/attachments/450107193820446722/492649912035573770/unknown.png",
