@@ -119,9 +119,15 @@ REACT_TRIGGERS = {"kali": REACT_EMOTES[0], "duck": REACT_EMOTES[1], "cybergame":
 WORD_MATCH_RE = r"^.*\b{}\b.*$"
 
 # General constants
+BOT_COMMAND_CHANNELS = [409860647170342919, 489217138020712478]
 WELCOME_MESSAGE = ("Welcome to the Cyber Discovery discussion discord! Before you begin, please check the "
                    "rules, roles and information in <#409853512185282561> to answer any questions.")
 WELCOME_CHANNEL_ID = int(environ.get("WELCOME_CHANNEL_ID", "411573884597436416"))
+# Put role IDs in a list in this list if you want them to be mutually exclusive.
+JOINABLE_ROLES_IDS = [[450096489822289923, 450096213552005120, 481217404127412255, 614480627298729995,
+                       614480703979257886, 750110703339176108], [701909326566129716], [698515815468892271],
+                      [672136081311006732]]
+
 
 # Misc roles
 HUNDRED_PERCENT_ROLE_ID = 640481360766697482

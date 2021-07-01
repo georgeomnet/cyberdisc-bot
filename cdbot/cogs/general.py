@@ -1,10 +1,10 @@
 import os
 
 from discord.ext import commands
-from discord.ext.commands import Bot, Cog, command, Context
+from discord.ext.commands import Bot, BucketType, Cog, command, Context, cooldown
 from git import Repo
 
-from cdbot.constants import WELCOME_CHANNEL_ID, WELCOME_MESSAGE
+from cdbot.constants import BOT_COMMAND_CHANNELS, JOINABLE_ROLES_IDS, WELCOME_CHANNEL_ID, WELCOME_MESSAGE
 
 path = os.path.dirname(os.path.abspath(__file__))
 path = "/".join(path.split("/")[:-2])
@@ -20,6 +20,9 @@ class General(Cog):
 
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    def in_commands_channel(ctx):
+        return ctx.channel.id in BOT_COMMAND_CHANNELS
 
     @Cog.listener()
     async def on_ready(self):
@@ -64,16 +67,16 @@ class General(Cog):
             # Missing arguments are likely human error so do not need logging
             parameter_name = error.param.name
             return await ctx.send(
-                f"\N{NO ENTRY SIGN} Required argument {parameter_name} was missing"
+                f"\N{NO ENTRY SIGN} Required argument {parameter_name} was missing."
             )
         elif isinstance(error, commands.CheckFailure):
             return await ctx.send(
-                "\N{NO ENTRY SIGN} You do not have permission to use that command"
+                "\N{NO ENTRY SIGN} You do not have permission to use that command or it is disallowed in this channel."
             )
         elif isinstance(error, commands.CommandOnCooldown):
             retry_after = round(error.retry_after)
             return await ctx.send(
-                f"\N{HOURGLASS} Command is on cooldown, try again after {retry_after} seconds"
+                f"\N{HOURGLASS} Command is on cooldown, try again after {retry_after} seconds."
             )
 
         # All errors below this need reporting and so do not return
@@ -81,10 +84,10 @@ class General(Cog):
         if isinstance(error, commands.ArgumentParsingError):
             # Provide feedback & report error
             await ctx.send(
-                "\N{NO ENTRY SIGN} An issue occurred while attempting to parse an argument"
+                "\N{NO ENTRY SIGN} An issue occurred while attempting to parse an argument."
             )
         elif isinstance(error, commands.BadArgument):
-            await ctx.send("\N{NO ENTRY SIGN} Conversion of an argument failed")
+            await ctx.send("\N{NO ENTRY SIGN} Conversion of an argument failed.")
         else:
             await ctx.send(
                 "\N{NO ENTRY SIGN} An error occured during execution, the error has been reported."
@@ -108,6 +111,38 @@ class General(Cog):
             extra_context["discord_info"]["Message"] = f"{ctx.message.id} (DM)"
 
         self.bot.log.exception(error, extra=extra_context)
+
+    @command(aliases=["rank", "role"])
+    @cooldown(1, 10, BucketType.user)
+    @commands.check(in_commands_channel)
+    async def join(self, ctx: Context, *, rank: str):
+        """
+        Join a rank.
+        """
+        try:
+            new_role = next((role for role in ctx.guild.roles if role.name.lower() == rank.lower()), None)
+            if new_role.id in sum(JOINABLE_ROLES_IDS, []):
+                if new_role in ctx.author.roles:
+                    await ctx.author.remove_roles(new_role, reason="Rank")
+                    await ctx.send(f"{ctx.author.mention} You left **{new_role}**.")
+                    return
+
+                for role_ids in JOINABLE_ROLES_IDS:
+                    if new_role.id in role_ids and (
+                            (old_role := next(iter(set(role_ids) & set(role.id for role in ctx.author.roles)), False))):
+                        old_role = ctx.guild.get_role(old_role)
+                        await ctx.author.remove_roles(old_role, reason="Ranks")
+                        await ctx.author.add_roles(new_role, reason="Ranks")
+                        await ctx.send(f"{ctx.author.mention} You left **{old_role}** and joined **{new_role}**")
+                        return
+
+                await ctx.author.add_roles(new_role, reason="Ranks")
+                await ctx.send(f"{ctx.author.mention} You joined **{new_role}**.")
+
+            else:
+                raise AttributeError
+        except AttributeError:
+            await ctx.send("That rank does not exist.")
 
     @command()
     async def bbcnews(self, ctx: Context):
