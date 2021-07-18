@@ -19,7 +19,7 @@ html2markdown = "^0.1.7"
 aiocontextvars = "^0.2.2"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.9.0"
+flake8 = "^3.9.2"
 flake8-bandit = "^2"
 flake8-bugbear = "^21"
 flake8-import-order = "^0.18"
